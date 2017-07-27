@@ -28,10 +28,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
-import rx.Observable;
-import rx.functions.Action0;
-import rx.functions.Action1;
-import rx.functions.Func1;
+import io.reactivex.Observable;
+import io.reactivex.functions.Function;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -105,7 +103,7 @@ public class TasksRepository implements TasksDataSource {
     public Observable<List<Task>> getTasks() {
         // Respond immediately with cache if available and not dirty
         if (mCachedTasks != null && !mCacheIsDirty) {
-            return Observable.from(mCachedTasks.values()).toList();
+            return Observable.fromIterable(mCachedTasks.values()).toList().toObservable();
         } else if (mCachedTasks == null) {
             mCachedTasks = new LinkedHashMap<>();
         }
@@ -119,18 +117,20 @@ public class TasksRepository implements TasksDataSource {
             Observable<List<Task>> localTasks = getAndCacheLocalTasks();
             return Observable.concat(localTasks, remoteTasks)
                     .filter(tasks -> !tasks.isEmpty())
-                    .first();
+                    .firstOrError()
+                    .toObservable();
         }
     }
 
     private Observable<List<Task>> getAndCacheLocalTasks() {
         return mTasksLocalDataSource.getTasks()
-                .flatMap(new Func1<List<Task>, Observable<List<Task>>>() {
+                .flatMap(new Function<List<Task>, Observable<List<Task>>>() {
                     @Override
-                    public Observable<List<Task>> call(List<Task> tasks) {
-                        return Observable.from(tasks)
+                    public Observable<List<Task>> apply(List<Task> tasks) {
+                        return Observable.fromIterable(tasks)
                                 .doOnNext(task -> mCachedTasks.put(task.getId(), task))
-                                .toList();
+                                .toList()
+                                .toObservable();
                     }
                 });
     }
@@ -138,16 +138,16 @@ public class TasksRepository implements TasksDataSource {
     private Observable<List<Task>> getAndSaveRemoteTasks() {
         return mTasksRemoteDataSource
                 .getTasks()
-                .flatMap(new Func1<List<Task>, Observable<List<Task>>>() {
+                .flatMap(new Function<List<Task>, Observable<List<Task>>>() {
                     @Override
-                    public Observable<List<Task>> call(List<Task> tasks) {
-                        return Observable.from(tasks).doOnNext(task -> {
+                    public Observable<List<Task>> apply(List<Task> tasks) {
+                        return Observable.fromIterable(tasks).doOnNext(task -> {
                             mTasksLocalDataSource.saveTask(task);
                             mCachedTasks.put(task.getId(), task);
-                        }).toList();
+                        }).toList().toObservable();
                     }
                 })
-                .doOnCompleted(() -> mCacheIsDirty = false);
+                .doOnComplete(() -> mCacheIsDirty = false);
     }
 
     @Override
@@ -260,7 +260,7 @@ public class TasksRepository implements TasksDataSource {
                     mCachedTasks.put(task.getId(), task);
                 });
 
-        return Observable.concat(localTask, remoteTask).first()
+        return Observable.concat(localTask, remoteTask).firstElement().toObservable()
                 .map(task -> {
                     if (task == null) {
                         throw new NoSuchElementException("No task found with taskId " + taskId);
@@ -308,6 +308,6 @@ public class TasksRepository implements TasksDataSource {
         return mTasksLocalDataSource
                 .getTask(taskId)
                 .doOnNext(task -> mCachedTasks.put(taskId, task))
-                .first();
+                .firstElement().toObservable();
     }
 }

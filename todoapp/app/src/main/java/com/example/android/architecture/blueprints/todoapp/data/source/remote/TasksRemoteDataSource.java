@@ -29,7 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import rx.Observable;
+import io.reactivex.Observable;
 
 /**
  * Implementation of the data source that adds a latency simulating network.
@@ -66,9 +66,10 @@ public class TasksRemoteDataSource implements TasksDataSource {
     @Override
     public Observable<List<Task>> getTasks() {
         return Observable
-                .from(TASKS_SERVICE_DATA.values())
+                .fromIterable(TASKS_SERVICE_DATA.values())
                 .delay(SERVICE_LATENCY_IN_MILLIS, TimeUnit.MILLISECONDS)
-                .toList();
+                .toList()
+                .toObservable();
     }
 
     @Override

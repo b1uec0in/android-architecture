@@ -27,7 +27,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import rx.Observable;
+import io.reactivex.Observable;
 
 /**
  * Implementation of a remote data source with static access to the data for easy testing.
@@ -52,7 +52,7 @@ public class FakeTasksRemoteDataSource implements TasksDataSource {
     @Override
     public Observable<List<Task>> getTasks() {
         Collection<Task> values = TASKS_SERVICE_DATA.values();
-        return Observable.from(values).toList();
+        return Observable.fromIterable(values).toList().toObservable();
     }
 
     @Override

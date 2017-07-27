@@ -29,7 +29,7 @@ import org.mockito.MockitoAnnotations;
 
 import java.util.List;
 
-import rx.Observable;
+import io.reactivex.Observable;
 
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;

@@ -24,9 +24,10 @@ import com.example.android.architecture.blueprints.todoapp.data.source.TasksRepo
 import com.example.android.architecture.blueprints.todoapp.util.EspressoIdlingResource;
 import com.example.android.architecture.blueprints.todoapp.util.schedulers.BaseSchedulerProvider;
 
-import rx.Observable;
-import rx.Subscription;
-import rx.subscriptions.CompositeSubscription;
+import io.reactivex.Observable;
+import io.reactivex.Single;
+import io.reactivex.disposables.CompositeDisposable;
+import io.reactivex.disposables.Disposable;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -46,7 +47,7 @@ public class StatisticsPresenter implements StatisticsContract.Presenter {
     private final BaseSchedulerProvider mSchedulerProvider;
 
     @NonNull
-    private CompositeSubscription mSubscriptions;
+    private CompositeDisposable mDisposables;
 
     public StatisticsPresenter(@NonNull TasksRepository tasksRepository,
                                @NonNull StatisticsContract.View statisticsView,
@@ -55,7 +56,7 @@ public class StatisticsPresenter implements StatisticsContract.Presenter {
         mStatisticsView = checkNotNull(statisticsView, "statisticsView cannot be null!");
         mSchedulerProvider = checkNotNull(schedulerProvider, "schedulerProvider cannot be null");
 
-        mSubscriptions = new CompositeSubscription();
+        mDisposables = new CompositeDisposable();
         mStatisticsView.setPresenter(this);
     }
 
@@ -66,7 +67,7 @@ public class StatisticsPresenter implements StatisticsContract.Presenter {
 
     @Override
     public void unsubscribe() {
-        mSubscriptions.clear();
+        mDisposables.clear();
     }
 
     private void loadStatistics() {
@@ -78,25 +79,24 @@ public class StatisticsPresenter implements StatisticsContract.Presenter {
 
         Observable<Task> tasks = mTasksRepository
                 .getTasks()
-                .flatMap(Observable::from);
-        Observable<Integer> completedTasks = tasks.filter(Task::isCompleted).count();
-        Observable<Integer> activeTasks = tasks.filter(Task::isActive).count();
-        Subscription subscription = Observable
+                .flatMap(Observable::fromIterable);
+        Single<Long> completedTasks = tasks.filter(Task::isCompleted).count();
+        Single<Long> activeTasks = tasks.filter(Task::isActive).count();
+        Disposable disposable = Single
                 .zip(completedTasks, activeTasks, (completed, active) -> Pair.create(active, completed))
                 .subscribeOn(mSchedulerProvider.computation())
                 .observeOn(mSchedulerProvider.ui())
-                .doOnTerminate(() -> {
+                .doAfterTerminate(() -> {
                     if (!EspressoIdlingResource.getIdlingResource().isIdleNow()) {
                         EspressoIdlingResource.decrement(); // Set app as idle.
                     }
+                    mStatisticsView.setProgressIndicator(false);
                 })
                 .subscribe(
-                        // onNext
-                        stats -> mStatisticsView.showStatistics(stats.first, stats.second),
+                        // onSuccess
+                        stats -> mStatisticsView.showStatistics(stats.first.intValue(), stats.second.intValue()),
                         // onError
-                        throwable -> mStatisticsView.showLoadingStatisticsError(),
-                        // onCompleted
-                        () -> mStatisticsView.setProgressIndicator(false));
-        mSubscriptions.add(subscription);
+                        throwable -> mStatisticsView.showLoadingStatisticsError());
+        mDisposables.add(disposable);
     }
 }

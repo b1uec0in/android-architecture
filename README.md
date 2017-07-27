@@ -33,31 +33,21 @@ The Presenters subscribe to the ``Observable``s from the ``TasksRepository`` and
 
 ```java
 ...
-Subscription subscription = Observable
-        .zip(completedTasks, activeTasks, new Func2<Integer, Integer, Pair<Integer, Integer>>() {
-            @Override
-            public Pair<Integer, Integer> call(Integer completed, Integer active) {
-                return Pair.create(active, completed);
-            }
-        })
+Disposable disposable = Single
+        .zip(completedTasks, activeTasks, (completed, active) -> Pair.create(active, completed))
         .subscribeOn(mSchedulerProvider.computation())
         .observeOn(mSchedulerProvider.ui())
-        .subscribe(new Action1<Pair<Integer, Integer>>() {
-            @Override
-            public void call(Pair<Integer, Integer> stats) {
-                mStatisticsView.showStatistics(stats.first, stats.second);
+        .doAfterTerminate(() -> {
+            if (!EspressoIdlingResource.getIdlingResource().isIdleNow()) {
+                EspressoIdlingResource.decrement(); // Set app as idle.
             }
-        }, new Action1<Throwable>() {
-            @Override
-            public void call(Throwable throwable) {
-                mStatisticsView.showLoadingStatisticsError();
-            }
-        }, new Action0() {
-            @Override
-            public void call() {
-                mStatisticsView.setProgressIndicator(false);
-            }
-        });
+            mStatisticsView.setProgressIndicator(false);
+        })
+        .subscribe(
+                // onSuccess
+                stats -> mStatisticsView.showStatistics(stats.first.intValue(), stats.second.intValue()),
+                // onError
+                throwable -> mStatisticsView.showLoadingStatisticsError());
 ```
 
 Handling of the working threads is done with the help of RxJava's `Scheduler`s. For example, the creation of the database together with all the database queries is happening on the IO thread. The `subscribeOn` and `observeOn` methods are used in the Presenter classes to define that the `Observer`s will operate on the computation thread and that the observing is on the main thread.

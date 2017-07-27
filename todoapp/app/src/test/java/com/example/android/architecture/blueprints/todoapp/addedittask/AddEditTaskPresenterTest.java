@@ -28,7 +28,7 @@ import org.mockito.MockitoAnnotations;
 
 import java.util.NoSuchElementException;
 
-import rx.Observable;
+import io.reactivex.Observable;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
