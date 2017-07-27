@@ -1,10 +1,10 @@
-# TODO-MVP-RXJAVA
+# TODO-MVP-RXJAVA 2.x
 
 Project owners: [Erik Hellman](https://github.com/erikhellman) & [Florina Muntenescu (upday)](https://github.com/florina-muntenescu)
 
 ### Summary
 
-This sample is based on the TODO-MVP project and uses RxJava for communication between the data model and presenter layers.
+This sample is based on the TODO-MVP-RXJAVA project and uses RxJava 2.x and SqlBrite 2.x.
 
 Compared to the TODO-MVP, both the Presenter contracts and the implementation of the Views stay the same. The changes are done to the data model layer and in the implementation of the Presenters. For the sake of simplicity we decided to keep the RxJava usage minimal, leaving optimizations like RxJava caching aside.
 
