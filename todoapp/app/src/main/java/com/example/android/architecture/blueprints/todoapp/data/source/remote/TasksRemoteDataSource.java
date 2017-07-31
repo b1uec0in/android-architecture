@@ -16,12 +16,10 @@
 
 package com.example.android.architecture.blueprints.todoapp.data.source.remote;
 
-import android.os.Handler;
 import android.support.annotation.NonNull;
 
 import com.example.android.architecture.blueprints.todoapp.data.Task;
 import com.example.android.architecture.blueprints.todoapp.data.source.TasksDataSource;
-import com.google.common.collect.Lists;
 
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -29,7 +27,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import io.reactivex.Maybe;
 import io.reactivex.Observable;
+import io.reactivex.Single;
 
 /**
  * Implementation of the data source that adds a latency simulating network.
@@ -64,21 +64,20 @@ public class TasksRemoteDataSource implements TasksDataSource {
     }
 
     @Override
-    public Observable<List<Task>> getTasks() {
+    public Single<List<Task>> getTasks() {
         return Observable
                 .fromIterable(TASKS_SERVICE_DATA.values())
                 .delay(SERVICE_LATENCY_IN_MILLIS, TimeUnit.MILLISECONDS)
-                .toList()
-                .toObservable();
+                .toList();
     }
 
     @Override
-    public Observable<Task> getTask(@NonNull String taskId) {
+    public Maybe<Task> getTask(@NonNull String taskId) {
         final Task task = TASKS_SERVICE_DATA.get(taskId);
         if(task != null) {
-            return Observable.just(task).delay(SERVICE_LATENCY_IN_MILLIS, TimeUnit.MILLISECONDS);
+            return Maybe.just(task).delay(SERVICE_LATENCY_IN_MILLIS, TimeUnit.MILLISECONDS);
         } else {
-            return Observable.empty();
+            return Maybe.empty();
         }
     }
 

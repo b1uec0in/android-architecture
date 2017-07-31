@@ -102,8 +102,9 @@ public class AddEditTaskPresenter implements AddEditTaskContract.Presenter {
                 .getTask(mTaskId)
                 .subscribeOn(mSchedulerProvider.computation())
                 .observeOn(mSchedulerProvider.ui())
+                .onErrorComplete()
                 .subscribe(
-                        // onNext
+                        // onSuccess
                         task -> {
                             if (mAddTaskView.isActive()) {
                                 mAddTaskView.setTitle(task.getTitle());
@@ -111,8 +112,11 @@ public class AddEditTaskPresenter implements AddEditTaskContract.Presenter {
 
                                 mIsDataMissing = false;
                             }
-                        }, // onError
-                        __ -> {
+                        },
+                        // onError
+                        __->{},
+                        // onComplete
+                        () -> {
                             if (mAddTaskView.isActive()) {
                                 mAddTaskView.showEmptyTaskError();
                             }

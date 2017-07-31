@@ -26,9 +26,7 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import java.util.NoSuchElementException;
-
-import io.reactivex.Observable;
+import io.reactivex.Maybe;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
@@ -119,7 +117,7 @@ public class AddEditTaskPresenterTest {
     @Test
     public void populateTask_callsRepoAndUpdatesViewOnSuccess() {
         Task testTask = new Task("TITLE", "DESCRIPTION");
-        when(mTasksRepository.getTask(testTask.getId())).thenReturn(Observable.just(testTask));
+        when(mTasksRepository.getTask(testTask.getId())).thenReturn(Maybe.just(testTask));
 
         // Get a reference to the class under test
         mAddEditTaskPresenter = new AddEditTaskPresenter(testTask.getId(),
@@ -140,7 +138,7 @@ public class AddEditTaskPresenterTest {
     public void populateTask_callsRepoAndUpdatesViewOnError() {
         Task testTask = new Task("TITLE", "DESCRIPTION");
         when(mTasksRepository.getTask(testTask.getId())).thenReturn(
-                Observable.<Task>error(new NoSuchElementException()));
+                Maybe.empty());
 
         // Get a reference to the class under test
         mAddEditTaskPresenter = new AddEditTaskPresenter(testTask.getId(),

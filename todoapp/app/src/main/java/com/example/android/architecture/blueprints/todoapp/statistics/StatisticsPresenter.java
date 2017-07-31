@@ -79,7 +79,7 @@ public class StatisticsPresenter implements StatisticsContract.Presenter {
 
         Observable<Task> tasks = mTasksRepository
                 .getTasks()
-                .flatMap(Observable::fromIterable);
+                .flatMapObservable(Observable::fromIterable);
         Single<Long> completedTasks = tasks.filter(Task::isCompleted).count();
         Single<Long> activeTasks = tasks.filter(Task::isActive).count();
         Disposable disposable = Single

@@ -33,7 +33,8 @@ import com.squareup.sqlbrite2.SqlBrite;
 
 import java.util.List;
 
-import io.reactivex.Observable;
+import io.reactivex.Maybe;
+import io.reactivex.Single;
 import io.reactivex.functions.Function;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -89,7 +90,7 @@ public class TasksLocalDataSource implements TasksDataSource {
     }
 
     @Override
-    public Observable<List<Task>> getTasks() {
+    public Single<List<Task>> getTasks() {
         String[] projection = {
                 TaskEntry.COLUMN_NAME_ENTRY_ID,
                 TaskEntry.COLUMN_NAME_TITLE,
@@ -98,11 +99,11 @@ public class TasksLocalDataSource implements TasksDataSource {
         };
         String sql = String.format("SELECT %s FROM %s", TextUtils.join(",", projection), TaskEntry.TABLE_NAME);
         return mDatabaseHelper.createQuery(TaskEntry.TABLE_NAME, sql)
-                .mapToList(mTaskMapperFunction);
+                .mapToList(mTaskMapperFunction).singleOrError();
     }
 
     @Override
-    public Observable<Task> getTask(@NonNull String taskId) {
+    public Maybe<Task> getTask(@NonNull String taskId) {
         String[] projection = {
                 TaskEntry.COLUMN_NAME_ENTRY_ID,
                 TaskEntry.COLUMN_NAME_TITLE,
@@ -112,7 +113,7 @@ public class TasksLocalDataSource implements TasksDataSource {
         String sql = String.format("SELECT %s FROM %s WHERE %s LIKE ?",
                 TextUtils.join(",", projection), TaskEntry.TABLE_NAME, TaskEntry.COLUMN_NAME_ENTRY_ID);
         return mDatabaseHelper.createQuery(TaskEntry.TABLE_NAME, sql, taskId)
-                .mapToOneOrDefault(mTaskMapperFunction, null);
+                .mapToOne(mTaskMapperFunction).singleElement();
     }
 
     @Override

@@ -31,7 +31,6 @@ import java.util.List;
 import io.reactivex.Observable;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
-import io.reactivex.functions.Function;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -113,12 +112,7 @@ public class TasksPresenter implements TasksContract.Presenter {
         mDisposables.clear();
         Disposable disposable = mTasksRepository
                 .getTasks()
-                .flatMap(new Function<List<Task>, Observable<Task>>() {
-                    @Override
-                    public Observable<Task> apply(List<Task> tasks) {
-                        return Observable.fromIterable(tasks);
-                    }
-                })
+                .flatMapObservable(Observable::fromIterable)
                 .filter(task -> {
                     switch (mCurrentFiltering) {
                         case ACTIVE_TASKS:

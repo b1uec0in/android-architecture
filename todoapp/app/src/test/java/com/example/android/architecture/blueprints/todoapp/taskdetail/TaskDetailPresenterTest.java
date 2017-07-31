@@ -26,7 +26,7 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import io.reactivex.Observable;
+import io.reactivex.Maybe;
 
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.never;
@@ -204,7 +204,7 @@ public class TaskDetailPresenterTest {
     }
 
     private void setTaskAvailable(Task task) {
-        when(mTasksRepository.getTask(eq(task.getId()))).thenReturn(Observable.just(task));
+        when(mTasksRepository.getTask(eq(task.getId()))).thenReturn(Maybe.just(task));
     }
 
 }

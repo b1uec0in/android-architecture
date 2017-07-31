@@ -31,7 +31,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.NoSuchElementException;
 
-import io.reactivex.Observable;
+import io.reactivex.Maybe;
+import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -258,10 +259,8 @@ public class TasksRepositoryTest {
         TestObserver<Task> testObserver = new TestObserver<>();
         mTasksRepository.getTask(task.getId()).subscribe(testObserver);
 
-        // Verify no data is returned
-        testObserver.assertNoValues();
-        // Verify that error is returned
-        testObserver.assertError(NoSuchElementException.class);
+        // Then the task is loaded from the remote repository
+        testObserver.assertValue(task);
     }
 
     @Test
@@ -383,8 +382,8 @@ public class TasksRepositoryTest {
         TestObserver<Task> testObserver = new TestObserver<>();
         mTasksRepository.getTask(taskId).subscribe(testObserver);
 
-        // Verify that error is returned
-        testObserver.assertError(NoSuchElementException.class);
+        // Verify that no data is returned
+        testObserver.assertNoValues();
     }
 
     @Test
@@ -404,19 +403,21 @@ public class TasksRepositoryTest {
     }
 
     private void setTasksNotAvailable(TasksDataSource dataSource) {
-        when(dataSource.getTasks()).thenReturn(Observable.just(Collections.<Task>emptyList()));
+        when(dataSource.getTasks()).thenReturn(Single.just(Collections.<Task>emptyList()));
     }
 
     private void setTasksAvailable(TasksDataSource dataSource, List<Task> tasks) {
         // don't allow the data sources to complete.
-        when(dataSource.getTasks()).thenReturn(Observable.just(tasks).concatWith(Observable.<List<Task>>never()));
+        when(dataSource.getTasks()).thenReturn(Single.just(tasks));
     }
 
     private void setTaskNotAvailable(TasksDataSource dataSource, String taskId) {
-        when(dataSource.getTask(eq(taskId))).thenReturn(Observable.<Task>error(NoSuchElementException::new).concatWith(Observable.<Task>never()));
+        //when(dataSource.getTask(eq(taskId))).thenReturn(Observable.<Task>error(NoSuchElementException::new).concatWith(Observable.<Task>never()));
+        when(dataSource.getTask(eq(taskId))).thenReturn(Maybe.empty());
     }
 
     private void setTaskAvailable(TasksDataSource dataSource, Task task) {
-        when(dataSource.getTask(eq(task.getId()))).thenReturn(Observable.just(task).concatWith(Observable.<Task>never()));
+        //when(dataSource.getTask(eq(task.getId()))).thenReturn(Observable.just(task).concatWith(Observable.<Task>never()));
+        when(dataSource.getTask(eq(task.getId()))).thenReturn(Maybe.just(task));
     }
 }
