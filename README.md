@@ -11,19 +11,19 @@ Compared to the TODO-MVP, both the Presenter contracts and the implementation of
 The data model layer exposes RxJava ``Observable`` streams as a way of retrieving tasks. The ``TasksDataSource`` interface contains methods like:
 
 ```java
-Observable<List<Task>> getTasks();
+Single<List<Task>> getTasks();
 
-Observable<Task> getTask(@NonNull String taskId);
+Maybe<Task> getTask(@NonNull String taskId);
 ```
 
 This is implemented in ``TasksLocalDataSource`` with the help of [SqlBrite](https://github.com/square/sqlbrite). The result of queries to the database being easily exposed as streams of data.
 
 ```java
 @Override
-public Observable<List<Task>> getTasks() {
+public Single<List<Task>> getTasks() {
     ...
     return mDatabaseHelper.createQuery(TaskEntry.TABLE_NAME, sql)
-            .mapToList(mTaskMapperFunction);
+            .mapToList(mTaskMapperFunction).singleOrError();
 }
 ```
 
